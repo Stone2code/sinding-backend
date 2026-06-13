@@ -18,6 +18,9 @@ const KAJABI_DEACTIVATE_URL = "https://checkout.kajabi.com/webhooks/offers/oD8Dh
 let carloToken = null;
 let tokenExpiry = null;
 
+// Stockage temporaire nom/email par orderReference
+const pendingOrders = {};
+
 async function getCarloToken() {
   if (carloToken && tokenExpiry && Date.now() < tokenExpiry) return carloToken;
 
@@ -170,6 +173,8 @@ app.post("/create-payment", async (req, res) => {
   }
 
   try {
+    const orderRef = `sinding-${Date.now()}`;
+    pendingOrders[orderRef] = { name, email };
     const token = await getCarloToken();
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
@@ -182,10 +187,10 @@ app.post("/create-payment", async (req, res) => {
       body: JSON.stringify({
         amount: MEMBERSHIP_AMOUNT,
         description: "The Strategy Studio — Abonnement mensuel",
-        orderReference: `sinding-${Date.now()}`,
+        orderReference: orderRef,
         successUrl: `${baseUrl}/success?email=${encodeURIComponent(email)}`,
         failedUrl:  `${baseUrl}/failed`,
-        metadata: { customerEmail: email, customerName: name },
+        metadata: { customerEmail: email, orderReference: orderRef },
       }),
     });
 
@@ -244,8 +249,10 @@ app.post("/webhook", async (req, res) => {
   if (!transaction) return console.log("Payload inattendu:", req.body);
 
   const { status, metadata, card } = transaction;
-  const email = metadata?.customerEmail;
-  const name  = metadata?.customerName || card?.holderName || email;
+  const email = transaction.metadata?.customerEmail;
+  const orderRef = transaction.metadata?.orderReference;
+  const stored = pendingOrders[orderRef] || {};
+  const name = stored.name || email;
 
   console.log(`\n📩 Callback Carlo — status: ${status}, email: ${email}`);
 
