@@ -164,10 +164,9 @@ app.get("/checkout", (req, res) => {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', sans-serif; background: #fafaf8; min-height: 100vh; display: flex; align-items: stretch; }
     .page { display: flex; width: 100%; min-height: 100vh; }
-    .left { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-    .hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; z-index: 0; }
-    .left::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.15) 100%); z-index: 1; }
-    .left-content { position: relative; z-index: 2; padding: 40px 48px 48px; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+    .left { flex: 1; background: #1a1a1a; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .hero-img { width: 100%; height: 340px; object-fit: cover; display: block; opacity: 0.92; }
+    .left-content { padding: 40px 48px 48px; flex: 1; display: flex; flex-direction: column; }
     .left h1 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #ffffff; line-height: 1.3; margin-bottom: 6px; }
     .left .tagline { font-size: 13px; color: #a0a0a0; margin-bottom: 32px; font-weight: 300; letter-spacing: 0.02em; }
     .left .intro { font-size: 14px; color: #cccccc; margin-bottom: 20px; font-weight: 400; line-height: 1.6; }
