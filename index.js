@@ -165,7 +165,7 @@ app.get("/checkout", (req, res) => {
     body { font-family: 'Inter', sans-serif; background: #fafaf8; min-height: 100vh; display: flex; align-items: stretch; }
     .page { display: flex; width: 100%; min-height: 100vh; }
     .left { flex: 1; background: #1a1a1a; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-    .hero-img { width: 100%; height: 340px; object-fit: cover; display: block; opacity: 0.92; }
+    .hero-img { width: 100%; height: 500px; object-fit: cover; display: block; opacity: 0.92; }
     .left-content { padding: 40px 48px 48px; flex: 1; display: flex; flex-direction: column; }
     .left h1 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #ffffff; line-height: 1.3; margin-bottom: 6px; }
     .left .tagline { font-size: 13px; color: #a0a0a0; margin-bottom: 32px; font-weight: 300; letter-spacing: 0.02em; }
