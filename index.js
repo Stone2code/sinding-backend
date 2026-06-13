@@ -238,6 +238,7 @@ app.get("/failed", (req, res) => {
 // ─── Callback Carlo (webhook) ────────────────────────────────────────────────
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200); // Répondre vite à Carlo
+  console.log("Payload complet:", JSON.stringify(req.body, null, 2));
 
   const { transaction } = req.body;
   if (!transaction) return console.log("Payload inattendu:", req.body);
