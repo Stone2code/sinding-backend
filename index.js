@@ -201,7 +201,7 @@ app.get("/checkout", (req, res) => {
 <body>
   <div class="page">
     <div class="left">
-      <img src="public/thesocialstudio.png" alt="The Social Studio" class="hero-img">
+      <img src="/thesocialstudio.png" alt="The Social Studio" class="hero-img">
       <div class="left-content">
         <h1>The Strategy Studio<br>Monthly Membership</h1>
         <p class="tagline">Cancel anytime after 2 months</p>
