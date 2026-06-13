@@ -2,12 +2,12 @@ const express  = require("express");
 const path     = require("path");
 const { Pool } = require("pg");
 const cron     = require("node-cron");
-
+ 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-
+ 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const CARLO_API     = "https://sandbox-api.corebycarlo.com/api/v1/partner";
 const CARLO_AUTH    = "https://sandbox-api.corebycarlo.com/api/v1/auth/partner/login";
@@ -15,24 +15,24 @@ const CARLO_EMAIL   = process.env.CARLO_EMAIL   || "pierremichael.karst@gmail.co
 const CARLO_PASS    = process.env.CARLO_PASS    || "Core1234!";
 const CARLO_API_KEY = process.env.CARLO_API_KEY || "0cf58d90df87386a78fa18859de596fdd0d26453ecf7aa8460ada18dba8454bc";
 const MEMBERSHIP_AMOUNT = 99;
-
+ 
 // En sandbox : renouvellement toutes les 2 minutes pour tester
 // En prod : changer par 30 * 24 * 60 * 60 * 1000 (30 jours)
 const BILLING_INTERVAL_MS = process.env.BILLING_INTERVAL_MS
   ? parseInt(process.env.BILLING_INTERVAL_MS)
   : 2 * 60 * 1000; // 2 minutes par défaut (sandbox)
-
+ 
 const KAJABI_ACTIVATE_URL   = "https://checkout.kajabi.com/webhooks/offers/oD8Dhsn5yeg8ZynT/2150333211/activate";
 const KAJABI_DEACTIVATE_URL = "https://checkout.kajabi.com/webhooks/offers/oD8Dhsn5yeg8ZynT/2150333211/deactivate";
-
+ 
 const BASE_URL = process.env.BASE_URL || "https://web-production-f819e.up.railway.app";
-
+ 
 // ─── PostgreSQL ───────────────────────────────────────────────────────────────
 const db = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://postgres:dRUKEewQClGcKFiqobCzYAFiMxuYfmFK@postgres.railway.internal:5432/railway",
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
-
+ 
 async function initDB() {
   await db.query(`
     CREATE TABLE IF NOT EXISTS subscribers (
@@ -47,14 +47,14 @@ async function initDB() {
   `);
   console.log("✅ DB prête");
 }
-
+ 
 // ─── Stockage temporaire nom/email par orderReference ────────────────────────
 const pendingOrders = {};
-
+ 
 // ─── Token Carlo (mis en cache 90 jours) ─────────────────────────────────────
 let carloToken = null;
 let tokenExpiry = null;
-
+ 
 async function getCarloToken() {
   if (carloToken && tokenExpiry && Date.now() < tokenExpiry) return carloToken;
   console.log("🔑 Récupération du token Carlo...");
@@ -70,7 +70,7 @@ async function getCarloToken() {
   console.log("✅ Token Carlo obtenu");
   return carloToken;
 }
-
+ 
 // ─── Helper : appelle Kajabi ──────────────────────────────────────────────────
 async function callKajabi(url, name, email) {
   const action = url.includes("activate") ? "ACTIVATE" : "DEACTIVATE";
@@ -83,14 +83,14 @@ async function callKajabi(url, name, email) {
   console.log(`← Kajabi réponse: ${res.status}`);
   return res.status;
 }
-
+ 
 // ─── Helper : débiter un subscriber ──────────────────────────────────────────
 async function chargeSubscriber(subscriber) {
   console.log(`\n💳 Renouvellement pour ${subscriber.email}...`);
   try {
     const token = await getCarloToken();
     const orderRef = `sinding-renew-${subscriber.id}-${Date.now()}`;
-
+ 
     const res = await fetch(`${CARLO_API}/transactions`, {
       method: "POST",
       headers: {
@@ -107,9 +107,9 @@ async function chargeSubscriber(subscriber) {
         metadata: { customerEmail: subscriber.email, orderReference: orderRef },
       }),
     });
-
+ 
     const data = await res.json();
-
+ 
     if (!res.ok) {
       console.error(`❌ Échec renouvellement ${subscriber.email}:`, data);
       // Désactiver l'accès Kajabi si le paiement échoue
@@ -117,7 +117,7 @@ async function chargeSubscriber(subscriber) {
       await db.query(`UPDATE subscribers SET status = 'failed' WHERE id = $1`, [subscriber.id]);
       return;
     }
-
+ 
     // Mettre à jour next_billing_at
     const nextDate = new Date(Date.now() + BILLING_INTERVAL_MS);
     await db.query(
@@ -125,12 +125,12 @@ async function chargeSubscriber(subscriber) {
       [nextDate, subscriber.id]
     );
     console.log(`✅ Renouvellement lancé pour ${subscriber.email} — prochain: ${nextDate.toISOString()}`);
-
+ 
   } catch (err) {
     console.error(`Erreur chargeSubscriber ${subscriber.email}:`, err.message);
   }
 }
-
+ 
 // ─── CRON : tourne toutes les minutes, vérifie qui doit être débité ───────────
 cron.schedule("* * * * *", async () => {
   try {
@@ -150,7 +150,7 @@ cron.schedule("* * * * *", async () => {
     console.error("Erreur cron:", err.message);
   }
 });
-
+ 
 // ─── Page checkout ────────────────────────────────────────────────────────────
 app.get("/checkout", (req, res) => {
   res.send(`<!DOCTYPE html>
@@ -164,9 +164,10 @@ app.get("/checkout", (req, res) => {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', sans-serif; background: #fafaf8; min-height: 100vh; display: flex; align-items: stretch; }
     .page { display: flex; width: 100%; min-height: 100vh; }
-    .left { flex: 1; background: #1a1a1a; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-    .hero-img { width: 100%; height: 340px; object-fit: cover; display: block; opacity: 0.92; }
-    .left-content { padding: 40px 48px 48px; flex: 1; display: flex; flex-direction: column; }
+    .left { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; z-index: 0; }
+    .left::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.15) 100%); z-index: 1; }
+    .left-content { position: relative; z-index: 2; padding: 40px 48px 48px; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
     .left h1 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #ffffff; line-height: 1.3; margin-bottom: 6px; }
     .left .tagline { font-size: 13px; color: #a0a0a0; margin-bottom: 32px; font-weight: 300; letter-spacing: 0.02em; }
     .left .intro { font-size: 14px; color: #cccccc; margin-bottom: 20px; font-weight: 400; line-height: 1.6; }
@@ -271,17 +272,17 @@ app.get("/checkout", (req, res) => {
 </body>
 </html>`);
 });
-
+ 
 // ─── Crée une transaction Carlo ───────────────────────────────────────────────
 app.post("/create-payment", async (req, res) => {
   const { name, email } = req.body;
   if (!name || !email) return res.status(400).json({ error: "Nom et email requis" });
-
+ 
   try {
     const orderRef = `sinding-${Date.now()}`;
     pendingOrders[orderRef] = { name, email };
     const token = await getCarloToken();
-
+ 
     const response = await fetch(`${CARLO_API}/transactions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -294,22 +295,22 @@ app.post("/create-payment", async (req, res) => {
         metadata: { customerEmail: email, orderReference: orderRef },
       }),
     });
-
+ 
     const data = await response.json();
     if (!response.ok) {
       console.error("Carlo error:", data);
       return res.status(500).json({ error: "Erreur Carlo", details: data });
     }
-
+ 
     console.log(`💳 Transaction créée pour ${email}`);
     res.json({ paymentPageUrl: data.paymentPageUrl });
-
+ 
   } catch (err) {
     console.error("Erreur create-payment:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
+ 
 // ─── Pages de retour ──────────────────────────────────────────────────────────
 app.get("/success", (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Payment confirmed</title>
@@ -321,7 +322,7 @@ app.get("/success", (req, res) => {
   <p>Welcome to The Strategy Studio.<br>You'll receive a confirmation email with access shortly.</p>
   </div></body></html>`);
 });
-
+ 
 app.get("/failed", (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Payment failed</title>
   <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fafaf8;}
@@ -333,28 +334,28 @@ app.get("/failed", (req, res) => {
   <p>Something went wrong.<br><a href="/checkout">Try again</a></p>
   </div></body></html>`);
 });
-
+ 
 // ─── Callback Carlo (webhook) ─────────────────────────────────────────────────
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
   console.log("Payload complet:", JSON.stringify(req.body, null, 2));
-
+ 
   const { transaction } = req.body;
   if (!transaction) return console.log("Payload inattendu:", req.body);
-
+ 
   const { status, metadata, cardId } = transaction;
   const email    = metadata?.customerEmail;
   const orderRef = metadata?.orderReference;
   const stored   = pendingOrders[orderRef] || {};
   const name     = stored.name || email;
-
+ 
   console.log(`\n📩 Callback Carlo — status: ${status}, email: ${email}, cardId: ${cardId}`);
   if (!email) return console.log("⚠️  Pas d'email, impossible d'appeler Kajabi");
-
+ 
   if (status === "COMPLETED") {
     // Activer Kajabi
     await callKajabi(KAJABI_ACTIVATE_URL, name, email);
-
+ 
     // Sauvegarder/mettre à jour le subscriber en DB
     const nextBilling = new Date(Date.now() + BILLING_INTERVAL_MS);
     try {
@@ -370,27 +371,28 @@ app.post("/webhook", async (req, res) => {
     } catch (err) {
       console.error("Erreur DB:", err.message);
     }
-
+ 
     // Nettoyer pendingOrders
     delete pendingOrders[orderRef];
-
+ 
   } else if (status === "FAILED" || status === "CANCELLED") {
     await callKajabi(KAJABI_DEACTIVATE_URL, name, email);
     await db.query(`UPDATE subscribers SET status = 'cancelled' WHERE email = $1`, [email]);
   }
 });
-
+ 
 // ─── Route admin : voir les subscribers ───────────────────────────────────────
 app.get("/admin/subscribers", async (req, res) => {
   const { rows } = await db.query(`SELECT id, email, name, card_id, status, next_billing_at, created_at FROM subscribers ORDER BY created_at DESC`);
   res.json(rows);
 });
-
+ 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => res.send("Sinding backend OK 🟢"));
-
+ 
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 initDB().then(() => {
   app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });
+
