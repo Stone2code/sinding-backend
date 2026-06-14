@@ -9,8 +9,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-const CARLO_API     = "https://sandbox-api.corebycarlo.com/api/v1/partner";
-const CARLO_AUTH    = "https://sandbox-api.corebycarlo.com/api/v1/auth/partner/login";
+const CARLO_API  = process.env.CARLO_API_URL  || "https://sandbox-api.corebycarlo.com/api/v1/partner";
+const CARLO_AUTH = process.env.CARLO_AUTH_URL || "https://sandbox-api.corebycarlo.com/api/v1/auth/partner/login";
 const CARLO_EMAIL   = process.env.CARLO_EMAIL   || "pierremichael.karst@gmail.com";
 const CARLO_PASS    = process.env.CARLO_PASS    || "Core1234!";
 const CARLO_API_KEY = process.env.CARLO_API_KEY || "0cf58d90df87386a78fa18859de596fdd0d26453ecf7aa8460ada18dba8454bc";
